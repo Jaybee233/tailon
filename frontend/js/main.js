@@ -1,6 +1,19 @@
 Vue.component('multiselect', window.VueMultiselect.default);
 Vue.component('vue-loading', window.VueLoading);
 
+//function getQuery(name) {
+//    let reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+//    let r = window.location.search.substr(1).match(reg);
+//    if(r != null) {
+//        return unescape(r[2]);
+//    }
+//    return null;
+//}
+//alert(window.location.search)
+//var fileName = getQuery('file');
+var dirName = location.pathname.replace(/\//,'');
+//alert(fileName)
+
 var apiURL = endsWith(window.relativeRoot, '/') ? 'ws' : '/ws';
 var apiURL = [window.location.protocol, '//', window.location.host, window.relativeRoot, apiURL].join('');
 
@@ -10,7 +23,7 @@ var app = new Vue({
     data: {
         'relativeRoot': relativeRoot,
         'commandScripts': commandScripts,
-
+        'number': 1,
         'fileList': [],
         'allowCommandNames': allowCommandNames,
         'allowDownload': allowDownload,
@@ -20,7 +33,7 @@ var app = new Vue({
         'script': null,
 
         'linesOfHistory': 2000,  // 0 for infinite history
-        'linesToTail': 10,
+        'linesToTail': 100,
         'wrapLines': false,
 
         'hideToolbar': false,
@@ -56,6 +69,9 @@ var app = new Vue({
             this.socket.onopen = this.onBackendOpen;
             this.socket.onclose = this.onBackendClose;
             this.socket.onmessage = this.onBackendMessage;
+            console.log('socket.onopen: ' + this.socket.onopen);
+            console.log('socket.onclose: ' + this.socket.onclose);
+            console.log('socket.onmessage: ' + this.socket.onmessage);
         },
         onBackendOpen: function () {
             console.log('connected to backend');
@@ -71,9 +87,16 @@ var app = new Vue({
             }, 1000);
         },
         onBackendMessage: function (message) {
+            //alert(message.data)
+//            var data = JSON.parse(inputFileName);
             var data = JSON.parse(message.data);
-
+            //alert(this.number)
             if (data.constructor === Object) {
+                if (this.number == 1) { 
+                    this.socket.send("list_" + dirName);
+                    this.number = 2;
+                }
+                //alert(inputFileName)
                 // Reshape into something that vue-multiselect :group-select can use.
                 var fileList = [];
                 Object.keys(data).forEach(function (key) {
@@ -83,7 +106,6 @@ var app = new Vue({
                         "files": data[key]
                     });
                 });
-
                 this.fileList = fileList;
 
                 // Set file input to first entry in list.
@@ -98,7 +120,8 @@ var app = new Vue({
         },
         refreshFiles: function () {
             console.log("updating file list");
-            this.socket.send("list");
+            // this.socket.send("list");
+            this.socket.send("list_" + dirName);
         },
         notifyBackend: function () {
             var msg = {
@@ -132,3 +155,4 @@ var app = new Vue({
         }
     }
 });
+

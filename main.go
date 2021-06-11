@@ -3,15 +3,16 @@ package main
 
 import (
 	"fmt"
-	"github.com/mitchellh/mapstructure"
-	"github.com/pelletier/go-toml"
-	flag "github.com/spf13/pflag"
 	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/pelletier/go-toml"
+	flag "github.com/spf13/pflag"
 )
 
 const scriptDescription = `
@@ -278,8 +279,11 @@ func main() {
 	config.RelativeRoot = "/" + strings.TrimLeft(config.RelativeRoot, "/")
 	config.RelativeRoot = strings.TrimRight(config.RelativeRoot, "/") + "/"
 
+        fmt.Println(flag.Args())
 	// Handle command-line file specs
 	filespecs := make([]FileSpec, len(flag.Args()))
+	fmt.Printf("Flag.args: %T\n", flag.Args())
+	fmt.Printf("Flag.args: %s\n", flag.Args())
 	for _, spec := range flag.Args() {
 		if filespec, err := parseFileSpec(spec); err != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing argument '%s': %s\n", spec, err)
@@ -289,6 +293,8 @@ func main() {
 		}
 	}
 	config.FileSpecs = filespecs
+	fmt.Printf("config.FileSpecs: %s\n", config.FileSpecs)
+	fmt.Printf("config.FileSpecs: %T\n", config.FileSpecs)
 
 	if len(config.FileSpecs) == 0 {
 		fmt.Fprintln(os.Stderr, "No files specified on command-line or in config file")

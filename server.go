@@ -14,8 +14,10 @@ import (
 	"path/filepath"
 
 	"github.com/gorilla/handlers"
-	"github.com/gvalkov/tailon/cmd"
-	"github.com/gvalkov/tailon/frontend"
+	// "github.com/gvalkov/tailon/cmd"
+	// "github.com/gvalkov/tailon/frontend"
+	"github.com/Jaybee233/tailon/frontend"
+	"github.com/Jaybee233/tailon/cmd"
 	"github.com/shurcooL/httpfs/html/vfstemplate"
 	"github.com/shurcooL/httpgzip"
 	"gopkg.in/igm/sockjs-go.v2/sockjs"
@@ -116,6 +118,10 @@ func wsHandler(session sockjs.Session) {
 
 func getFiles(Path string) []string {
         sfodler := make([]string, 0, 5)
+        _, err := os.Stat(Path)
+        if os.IsNotExist(err) {
+            Path = "./"
+        }
 	filepath.Walk(Path, func (path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
 			//path, err := filepath.Abs(path)

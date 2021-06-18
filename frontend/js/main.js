@@ -39,6 +39,8 @@ var app = new Vue({
         'hideToolbar': false,
         'showConfig': false,
         'showLoadingOverlay': false,
+        'showScript': false,
+        'showCommand': false,
 
         'socket': null,
         'isConnected': false

@@ -90,7 +90,7 @@ const defaultTomlConfig = `
   relative-root = "/"
   listen-addr = [":8080"]
   allow-download = true
-  allow-commands = ["tail", "grep", "sed", "awk"]
+  allow-commands = ["tail"]
 
   [commands]
 

@@ -46,7 +46,8 @@ func createListing(filespecs []FileSpec) map[string][]*ListEntry {
 		case "file":
 			entry := fileInfo(spec.Path)
 			if spec.Alias != "" {
-				entry.Alias = spec.Alias
+				entry.Alias = path.Base(spec.Alias)
+				// entry.Alias = spec.Alias
 			} else {
 				entry.Alias = entry.Path
 			}

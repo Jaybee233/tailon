@@ -3,57 +3,44 @@ package main
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/pelletier/go-toml"
+	flag "github.com/spf13/pflag"
 	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"strings"
 	"sync"
-
-	"github.com/mitchellh/mapstructure"
-	"github.com/pelletier/go-toml"
-	flag "github.com/spf13/pflag"
 )
 
 const scriptDescription = `
 Usage: tailon -c <config file>
 Usage: tailon [options] <filespec> [<filespec> ...]
-
 Tailon is a webapp for looking at and searching through files and streams.
 `
 
 const scriptEpilog = `
 Tailon can be configured through a config file or with command-line flags.
-
 The command-line interface expects one or more filespec arguments, which
 specify the files to be served. The expected format is:
-
   [alias=name,group=name]<spec>
-
 where <spec> can be a file name, glob or directory. The optional 'alias='
 and 'group=' specifiers change the display name of the files in the UI and
 the group in which they appear.
-
 A file specifier points to a single, possibly non-existent file. The file
 name in the UI can be overwritten with 'alias='. For example:
-
   tailon alias=error.log,/var/log/apache/error.log
-
 A glob evaluates to the list of files that match a shell file name pattern.
 The pattern is evaluated each time the file list is refreshed. An 'alias='
 specifier overwrites the parent directory of each matched file in the UI.
-
   tailon "/var/log/apache/*.log" "alias=nginx,/var/log/nginx/*.log"
-
 If a directory is given, all files under it are served recursively.
-
   tailon /var/log/apache/ /var/log/nginx/
-
 Example usage:
   tailon file1.txt file2.txt file3.txt
   tailon alias=messages,/var/log/messages "/var/log/*.log"
   tailon -b localhost:8080,localhost:8081 -c config.toml
-
 For information on usage through the configuration file, please refer to the
 '--help-config' option.
 `
@@ -61,27 +48,19 @@ For information on usage through the configuration file, please refer to the
 const configFileHelp = `
 Tailon can be configured through a TOML config file. The config file allows
 more configurability than the command-line interface.
-
   # The <title> of the index page.
   title = "Tailon file viewer"
-
   # The root of the web application.
   relative-root = "/"
-
   # The addresses to listen on. Can be an address:port combination or an unix socket.
   listen-addr = [":8080"]
-
   # Allow download of know files (only those matched by a filespec).
   allow-download = true
-
   # Commands that will appear in the UI.
   allow-commands = ["tail", "grep", "sed", "awk"]
-
   # File, glob and dir filespecs are similar in principle to their
   # command-line counterparts.
-
   # TODO
-
 At startup, tailon loads a default config file. The contents of that file are:
 `
 
@@ -90,23 +69,18 @@ const defaultTomlConfig = `
   relative-root = "/"
   listen-addr = [":8080"]
   allow-download = true
-  allow-commands = ["tail"]
-
+  allow-commands = ["tail", "grep", "sed", "awk"]
   [commands]
-
     [commands.tail]
     action = ["tail", "-n", "$lines", "-F", "$path"]
-
     [commands.grep]
     stdin = "tail"
     action = ["grep", "--text", "--line-buffered", "--color=never", "-e", "$script"]
     default = ".*"
-
     [commands.sed]
     stdin = "tail"
     action = ["sed", "-u", "-e", "$script"]
     default = "s/.*/&/"
-
     [commands.awk]
     stdin = "tail"
     action = ["awk", "--sandbox", "$script"]
@@ -279,11 +253,8 @@ func main() {
 	config.RelativeRoot = "/" + strings.TrimLeft(config.RelativeRoot, "/")
 	config.RelativeRoot = strings.TrimRight(config.RelativeRoot, "/") + "/"
 
-        fmt.Println(flag.Args())
 	// Handle command-line file specs
 	filespecs := make([]FileSpec, len(flag.Args()))
-	fmt.Printf("Flag.args: %T\n", flag.Args())
-	fmt.Printf("Flag.args: %s\n", flag.Args())
 	for _, spec := range flag.Args() {
 		if filespec, err := parseFileSpec(spec); err != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing argument '%s': %s\n", spec, err)
@@ -293,8 +264,6 @@ func main() {
 		}
 	}
 	config.FileSpecs = filespecs
-	fmt.Printf("config.FileSpecs: %s\n", config.FileSpecs)
-	fmt.Printf("config.FileSpecs: %T\n", config.FileSpecs)
 
 	if len(config.FileSpecs) == 0 {
 		fmt.Fprintln(os.Stderr, "No files specified on command-line or in config file")

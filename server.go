@@ -2,6 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/gorilla/handlers"
+	"github.com/gvalkov/tailon/cmd"
+	"github.com/gvalkov/tailon/frontend"
+	"github.com/shurcooL/httpfs/html/vfstemplate"
+	"github.com/shurcooL/httpgzip"
+	"gopkg.in/igm/sockjs-go.v2/sockjs"
 	"html/template"
 	"log"
 	"net/http"
@@ -9,18 +15,6 @@ import (
 	"os/exec"
 	"strconv"
 	"time"
-	"fmt"
-	"net/url"
-	"path/filepath"
-
-	"github.com/gorilla/handlers"
-	// "github.com/gvalkov/tailon/cmd"
-	// "github.com/gvalkov/tailon/frontend"
-	"github.com/Jaybee233/tailon/frontend"
-	"github.com/Jaybee233/tailon/cmd"
-	"github.com/shurcooL/httpfs/html/vfstemplate"
-	"github.com/shurcooL/httpgzip"
-	"gopkg.in/igm/sockjs-go.v2/sockjs"
 )
 
 func setupRoutes(relativeroot string) *http.ServeMux {
@@ -101,9 +95,6 @@ func wsHandler(session sockjs.Session) {
 	defer close(done)
 
 	go wsWriter(session, messages, done)
-        
-//        messages <- "{\"command\":\"tail\",\"script\":null,\"entry\":{\"path\":\"main.go\",\"alias\":\"main.go\",\"size\":100,\"mtime\":\"2021-06-10T11:17:26+08:00\",\"exists\":true},\"nlines\":100}"
-//	go wsWriter(session, messages, done)
 
 	for {
 		if msg, err := session.Recv(); err == nil {
@@ -114,25 +105,6 @@ func wsHandler(session sockjs.Session) {
 		}
 		break
 	}
-}
-
-func getFiles(Path string) []string {
-        sfodler := make([]string, 0, 5)
-        _, err := os.Stat(Path)
-        if os.IsNotExist(err) {
-            Path = "./"
-        }
-	filepath.Walk(Path, func (path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			//path, err := filepath.Abs(path)
-			sfodler = append(sfodler, path)
-			if err != nil {
-				return err
-			}
-		}
-		return nil	
-	})
-	return sfodler
 }
 
 // Goroutine handling received messages and streaming of file contents.
@@ -146,30 +118,8 @@ func wsWriter(session sockjs.Session, messages chan string, done <-chan struct{}
 	for {
 		select {
 		case msg := <-messages:
-                        fmt.Printf("message: %s\n", msg)
-			if msg[0:4] == "list" {
-				// fileList := getFiles("./" + msg[5:])
-
-				var fileList []string
-				if msg == "list" {
-				    // fileList = getFiles("./")
-				    
-				} else {
-				    fileList = getFiles("./" + msg[5:])
-				    
-				}
-				filespecs := make([]FileSpec, len(fileList))
-                         	for _, spec := range fileList {
-                         		if filespec, err := parseFileSpec(spec); err != nil {
-                         			fmt.Fprintf(os.Stderr, "Error parsing argument '%s': %s\n", spec, err)
-                         			os.Exit(1)
-                         		} else {
-                         			filespecs = append(filespecs, filespec)
-                         		}
-                         	}
-				lst := createListing(filespecs)
-				//filespecs := make([]FileSpec, len(flag.Args()))
-				//lst := createListing(config.FileSpecs)
+			if msg == "list" {
+				lst := createListing(config.FileSpecs)
 				b, err := json.Marshal(lst)
 				if err != nil {
 					log.Println("error: ", err)
@@ -179,16 +129,15 @@ func wsWriter(session sockjs.Session, messages chan string, done <-chan struct{}
 				msgJSON := FrontendCommand{}
 				json.Unmarshal([]byte(msg), &msgJSON)
 
-				// if !fileAllowed(msgJSON.Entry.Path) {
-				// 	log.Print("Unknown file: ", msgJSON.Entry.Path)
-				// 	continue
-				// }
+				if !fileAllowed(msgJSON.Entry.Path) {
+					log.Print("Unknown file: ", msgJSON.Entry.Path)
+					continue
+				}
 
 				killProcs(procA, procB)
 
 				// Check if the command is using another command for stdin.
 				stdinSource := config.CommandSpecs[msgJSON.Command].Stdin
-				fmt.Printf("stdinSource: %s\n", stdinSource)
 				if stdinSource != "" {
 					actionA := config.CommandSpecs[stdinSource].Action
 					actionA = expandCommandArgs(actionA, msgJSON)
@@ -197,18 +146,8 @@ func wsWriter(session sockjs.Session, messages chan string, done <-chan struct{}
 				}
 
 				actionB := config.CommandSpecs[msgJSON.Command].Action
-				fmt.Printf("actionB-1: %s\n", actionB)
 				actionB = expandCommandArgs(actionB, msgJSON)
-				fmt.Printf("actionB-2: %s\n", actionB)
-				fmt.Printf("msgJSON: %v\n", msgJSON)
-				actionB[4], _ = url.QueryUnescape(actionB[4])
 				procB = cmd.NewCmdOptions(cmdOptions, actionB[0], actionB[1:]...)
-				fmt.Printf("procB: %s\n", procB)
-				fmt.Printf("actionB[0]: %s\n", actionB[0])
-				fmt.Printf("actionB[1]: %s\n", actionB[1])
-				fmt.Printf("actionB[2]: %s\n", actionB[2])
-				fmt.Printf("actionB[3]: %s\n", actionB[3])
-				fmt.Printf("actionB[4]: %s\n", actionB[4])
 				log.Print("Running command: ", actionB)
 
 				// Start streaming procB's stdout and stderr to the client.

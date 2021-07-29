@@ -34,7 +34,8 @@ body {
   flex: 1 0 auto; }
 
 div #file-select {
-  min-width: 22%; }
+  min-width: 22%;
+  max-width: 22%; }
 
 div #command-select {
   min-width: 120px; }

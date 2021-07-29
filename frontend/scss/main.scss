@@ -297,6 +297,7 @@ input::placeholder {
       border: 0;
       border-radius: 0;
       padding: 0 1px;
+      overflow: auto;
   }
 
   .multiselect__content {
@@ -343,7 +344,6 @@ input::placeholder {
 
   .multiselect__single {
       line-height: inherit;
-      overflow: auto;
   }
 
   .multiselect__input, .multiselect__single {

@@ -50,6 +50,7 @@ body {
 div #file-select {
   min-width: 22%;
   max-width: 22%;
+  overflow:scroll;
 }
 
 div #command-select {

@@ -20,15 +20,16 @@ body {
   width: 100%;
   background: $tailon-toolbar-background-color;
 
-  padding-top: 0px;
+  padding-top: 5px;
   padding-left: 5px;
   padding-right: 5px;
-  height: 4%;
+  height: 30px;
 
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   justify-content: flex-start;
+
   align-content: stretch;
   align-items: center;
 }
@@ -47,7 +48,7 @@ body {
 }
 
 div #file-select {
-  min-width: 50%;
+  min-width: 22%;
 }
 
 div #command-select {
@@ -183,7 +184,7 @@ div #command-select {
 // Log view style.
 //----------------------------------------------------------------------------
 .scrollable {
-  height: 94%;
+  height: 100%;
   word-break: break-all;
   white-space: pre;
   overflow: auto;

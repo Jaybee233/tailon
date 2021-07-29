@@ -50,7 +50,6 @@ body {
 div #file-select {
   min-width: 22%;
   max-width: 22%;
-  overflow: auto;
 }
 
 div #command-select {
@@ -344,6 +343,7 @@ input::placeholder {
 
   .multiselect__single {
       line-height: inherit;
+      overflow: auto;
   }
 
   .multiselect__input, .multiselect__single {
